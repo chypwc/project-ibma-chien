@@ -38,14 +38,15 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ github.event.inputs.region }}
+
       - name: Delete broken stack if needed
-      run: |
-        STATUS=$(aws cloudformation describe-stacks --stack-name my-stack-name --query "Stacks[0].StackStatus" --output text || echo "NOT_FOUND")
-        if [ "$STATUS" = "ROLLBACK_COMPLETE" ]; then
-          echo "Deleting failed stack..."
-          aws cloudformation delete-stack --stack-name my-stack-name
-          aws cloudformation wait stack-delete-complete --stack-name my-stack-name
-        fi
+        run: |
+          STATUS=$(aws cloudformation describe-stacks --stack-name my-stack-name --query "Stacks[0].StackStatus" --output text || echo "NOT_FOUND")
+          if [ "$STATUS" = "ROLLBACK_COMPLETE" ]; then
+            echo "Deleting failed stack..."
+            aws cloudformation delete-stack --stack-name my-stack-name
+            aws cloudformation wait stack-delete-complete --stack-name my-stack-name
+          fi
 
       - name: Configure environment name
         id: env-name
