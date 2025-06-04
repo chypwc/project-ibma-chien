@@ -39,11 +39,10 @@ jobs:
           zip -j lambda_function.zip lambda/transfer.py
           aws s3 cp lambda_function.zip s3://${{ github.event.inputs.lambdaZipBucket }}/lambda_function.zip
 
-  deploy-cfn:
-    needs: upload-lambda
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source code
+      - name: Checkout source
         uses: actions/checkout@v2
 
       - name: Configure AWS credentials
@@ -51,19 +50,21 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ github.event.inputs.region }}
+          aws-region: ap-southeast-2
 
-      - name: Print input variables
+      - name: Upload Lambda ZIP
         run: |
-          echo "Region: ${{ github.event.inputs.region }}"
-          echo "Source: ${{ github.event.inputs.sourceBucket }}"
-          echo "Destination: ${{ github.event.inputs.destinationBucket }}"
-          echo "LambdaZipBucket: ${{ github.event.inputs.lambdaZipBucket }}"
+          zip -j lambda_function.zip lambda/transfer.py
+          aws s3 cp lambda_function.zip s3://lambda-function-bucket-chien/lambda_function.zip
 
       - name: Deploy CloudFormation stack
         uses: aws-actions/aws-cloudformation-github-deploy@v1
         with:
           name: s3-lambda-transfer
           template: cfn/s3-lambda-transfer.yml
-          parameter-overrides: "SourceBucketName=source-bucket-chien DestinationBucketName=destination-bucket-chien LambdaS3Bucket=lambda-function-bucket-chien LambdaS3Key=lambda_function.zip"
+          parameter-overrides: |
+            SourceBucketName=source-bucket-chien
+            DestinationBucketName=destination-bucket-chien
+            LambdaS3Bucket=lambda-function-bucket-chien
+            LambdaS3Key=lambda_function.zip
           capabilities: CAPABILITY_IAM
