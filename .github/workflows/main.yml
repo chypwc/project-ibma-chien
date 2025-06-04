@@ -11,7 +11,7 @@ on:
         default: "ap-southeast-2"
       bucketName:
         description: "S3 Bucket Name"
-        default: "imba-test-bucket-leo"
+        default: "imba-test-bucket-chien"
         required: true
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -28,13 +28,13 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ github.event.inputs.region }} 
+          aws-region: ${{ github.event.inputs.region }}
 
       - name: Deploy S3 Buckets CloudFormation Stacks
         id: s3-buckets
         uses: aws-actions/aws-cloudformation-github-deploy@v1.0.3
         with:
-          name:  s3-buckets
+          name: s3-buckets
           template: cfn/s3.yml
           parameter-overrides: >-
             BucketName=${{ github.event.inputs.bucketName }}
