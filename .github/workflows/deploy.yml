@@ -61,7 +61,7 @@ jobs:
           echo "LambdaZipBucket: ${{ github.event.inputs.lambdaZipBucket }}"
 
       - name: Deploy CloudFormation stack
-        uses: aws-actions/aws-cloudformation-github-deploy@v1.0.3
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
         with:
           name: s3-lambda-transfer
           template: cfn/s3-lambda-transfer.yml
