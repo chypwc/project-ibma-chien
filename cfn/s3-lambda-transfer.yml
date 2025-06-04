@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: >
   Set up two S3 buckets and a Lambda function that copies files from source to destination
 
@@ -15,7 +15,6 @@ Parameters:
     Description: Key (path) to the Lambda zip file
 
 Resources:
-
   SourceBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -50,7 +49,7 @@ Resources:
                 Action:
                   - s3:GetObject
                   - s3:PutObject
-                Resource: 
+                Resource:
                   - !Sub arn:aws:s3:::${SourceBucketName}/*
                   - !Sub arn:aws:s3:::${DestinationBucketName}/*
               - Effect: Allow
@@ -81,4 +80,14 @@ Resources:
       FunctionName: !Ref TransferFunction
       Action: lambda:InvokeFunction
       Principal: s3.amazonaws.com
-      SourceArn: !GetAtt SourceBucket.Arn
+      SourceArn: !Sub arn:aws:s3:::${SourceBucketName}
+
+  BucketNotification:
+    Type: AWS::S3::BucketNotification
+    DependsOn: LambdaInvokePermission
+    Properties:
+      Bucket: !Ref SourceBucket
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt TransferFunction.Arn
