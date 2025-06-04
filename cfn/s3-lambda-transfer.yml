@@ -17,6 +17,7 @@ Parameters:
 Resources:
   SourceBucket:
     Type: AWS::S3::Bucket
+    DependsOn: LambdaInvokePermission
     Properties:
       BucketName: !Ref SourceBucketName
       NotificationConfiguration:
@@ -81,13 +82,3 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: s3.amazonaws.com
       SourceArn: !Sub arn:aws:s3:::${SourceBucketName}
-
-  BucketNotification:
-    Type: AWS::S3::BucketNotification
-    DependsOn: LambdaInvokePermission
-    Properties:
-      Bucket: !Ref SourceBucket
-      NotificationConfiguration:
-        LambdaConfigurations:
-          - Event: s3:ObjectCreated:*
-            Function: !GetAtt TransferFunction.Arn
