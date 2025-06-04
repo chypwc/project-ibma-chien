@@ -65,9 +65,5 @@ jobs:
         with:
           name: s3-lambda-transfer
           template: cfn/s3-lambda-transfer.yml
-          parameter-overrides: >
-            SourceBucketName=source-bucket-chien
-            DestinationBucketName=destination-bucket-chien
-            LambdaS3Bucket=lambda-function-bucket-chien
-            LambdaS3Key=lambda_function.zip
+          parameter-overrides: "SourceBucketName=source-bucket-chien DestinationBucketName=destination-bucket-chien LambdaS3Bucket=lambda-function-bucket-chien LambdaS3Key=lambda_function.zip"
           capabilities: CAPABILITY_IAM
