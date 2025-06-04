@@ -66,8 +66,8 @@ jobs:
           name: s3-lambda-transfer
           template: cfn/s3-lambda-transfer.yml
           parameter-overrides: >
-            "SourceBucketName=${{ github.event.inputs.sourceBucket }}"
-            "DestinationBucketName=${{ github.event.inputs.destinationBucket }}"
-            "LambdaS3Bucket=${{ github.event.inputs.lambdaZipBucket }}"
-            "LambdaS3Key=lambda_function.zip"
+            SourceBucketName=source-bucket-chien
+            DestinationBucketName=destination-bucket-chien
+            LambdaS3Bucket=lambda-function-bucket-chien
+            LambdaS3Key=lambda_function.zip
           capabilities: CAPABILITY_IAM
