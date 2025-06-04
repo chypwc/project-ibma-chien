@@ -67,6 +67,23 @@ jobs:
           zip -j lambda_function.zip lambda/transfer.py
           aws s3 cp lambda_function.zip s3://${{ github.event.inputs.lambdaZipBucket }}/lambda_function.zip
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install pandas and pyarrow to layer directory
+        run: |
+          mkdir -p python
+          pip install pandas pyarrow -t python/
+
+      - name: Zip Lambda layer
+        run: zip -r pandas-layer.zip python
+
+      - name: Upload Lambda layer to S3
+        run: |
+          aws s3 cp pandas-layer.zip s3://${{ github.event.inputs.lambdaZipBucket }}/pandas-layer.zip
+
       - name: Debug input parameters
         run: |
           echo "Region: ${{ github.event.inputs.region }}"

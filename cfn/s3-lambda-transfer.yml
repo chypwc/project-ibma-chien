@@ -74,6 +74,8 @@ Resources:
       Environment:
         Variables:
           DEST_BUCKET: !Ref DestinationBucketName
+      Layers:
+        - !Ref PandasLayer
 
   LambdaInvokePermission:
     Type: AWS::Lambda::Permission
@@ -82,3 +84,14 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: s3.amazonaws.com
       SourceArn: !Sub arn:aws:s3:::${SourceBucketName}
+
+  PandasLayer:
+  Type: AWS::Lambda::LayerVersion
+  Properties:
+    LayerName: pandas-pyarrow-layer
+    Description: "Pandas and PyArrow Layer"
+    Content:
+      S3Bucket: !Ref LambdaS3Bucket
+      S3Key: pandas-layer.zip
+    CompatibleRuntimes:
+      - python3.11
