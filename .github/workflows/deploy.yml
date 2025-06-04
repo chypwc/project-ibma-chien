@@ -17,8 +17,15 @@ on:
         required: true
       lambdaZipBucket:
         description: "S3 bucket to upload Lambda ZIP"
-        default: "my-artifact-bucket"
+        default: "lambda-function-bucket-chien"
         required: true
+
+env:
+  REGION: ${{ github.event.inputs.region }}
+  SOURCE_BUCKET: ${{ github.event.inputs.sourceBucket }}
+  DEST_BUCKET: ${{ github.event.inputs.destinationBucket }}
+  LAMBDA_ZIP_BUCKET: ${{ github.event.inputs.lambdaZipBucket }}
+  LAMBDA_ZIP_KEY: lambda_function.zip
 
 jobs:
   upload-lambda:
@@ -32,14 +39,15 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ github.event.inputs.region }}
+          aws-region: ${{ env.REGION }}
 
       - name: Package Lambda and upload to S3
         run: |
           zip -j lambda_function.zip lambda/transfer.py
-          aws s3 cp lambda_function.zip s3://${{ github.event.inputs.lambdaZipBucket }}/lambda_function.zip
+          aws s3 cp lambda_function.zip s3://$LAMBDA_ZIP_BUCKET/$LAMBDA_ZIP_KEY
 
   deploy:
+    needs: upload-lambda
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
@@ -50,12 +58,15 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-southeast-2
+          aws-region: ${{ env.REGION }}
 
-      - name: Upload Lambda ZIP
+      - name: Print input parameters for debugging
         run: |
-          zip -j lambda_function.zip lambda/transfer.py
-          aws s3 cp lambda_function.zip s3://lambda-function-bucket-chien/lambda_function.zip
+          echo "Region: $REGION"
+          echo "SourceBucket: $SOURCE_BUCKET"
+          echo "DestinationBucket: $DEST_BUCKET"
+          echo "LambdaS3Bucket: $LAMBDA_ZIP_BUCKET"
+          echo "LambdaS3Key: $LAMBDA_ZIP_KEY"
 
       - name: Deploy CloudFormation stack
         uses: aws-actions/aws-cloudformation-github-deploy@v1
@@ -63,8 +74,8 @@ jobs:
           name: s3-lambda-transfer
           template: cfn/s3-lambda-transfer.yml
           parameter-overrides: >
-            SourceBucketName=source-bucket-chien
-            DestinationBucketName=destination-bucket-chien
-            LambdaS3Bucket=lambda-function-bucket-chien
-            LambdaS3Key=lambda_function.zip
+            SourceBucketName=${{ env.SOURCE_BUCKET }}
+            DestinationBucketName=${{ env.DEST_BUCKET }}
+            LambdaS3Bucket=${{ env.LAMBDA_ZIP_BUCKET }}
+            LambdaS3Key=${{ env.LAMBDA_ZIP_KEY }}
           capabilities: CAPABILITY_IAM
