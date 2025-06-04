@@ -86,12 +86,12 @@ Resources:
       SourceArn: !Sub arn:aws:s3:::${SourceBucketName}
 
   PandasLayer:
-  Type: AWS::Lambda::LayerVersion
-  Properties:
-    LayerName: pandas-pyarrow-layer
-    Description: "Pandas and PyArrow Layer"
-    Content:
-      S3Bucket: !Ref LambdaS3Bucket
-      S3Key: pandas-layer.zip
-    CompatibleRuntimes:
-      - python3.11
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      LayerName: pandas-pyarrow-layer
+      Description: "Pandas and PyArrow Layer"
+      Content:
+        S3Bucket: !Ref LambdaS3Bucket
+        S3Key: pandas-layer.zip
+      CompatibleRuntimes:
+        - python3.11
