@@ -5,77 +5,72 @@ on:
     inputs:
       region:
         description: "AWS Region"
-        default: "ap-southeast-2"
         required: true
+        default: "ap-southeast-2"
       sourceBucket:
         description: "Source S3 bucket name"
-        default: "source-bucket-chien"
         required: true
+        default: "source-bucket-chien"
       destinationBucket:
         description: "Destination S3 bucket name"
-        default: "destination-bucket-chien"
         required: true
+        default: "destination-bucket-chien"
       lambdaZipBucket:
         description: "S3 bucket to upload Lambda ZIP"
-        default: "lambda-function-bucket-chien"
         required: true
-
-env:
-  REGION: ${{ github.event.inputs.region }}
-  SOURCE_BUCKET: ${{ github.event.inputs.sourceBucket }}
-  DEST_BUCKET: ${{ github.event.inputs.destinationBucket }}
-  LAMBDA_ZIP_BUCKET: ${{ github.event.inputs.lambdaZipBucket }}
-  LAMBDA_ZIP_KEY: lambda_function.zip
+        default: "lambda-function-bucket-chien"
 
 jobs:
-  upload-lambda:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v2
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.REGION }}
-
-      - name: Package Lambda and upload to S3
-        run: |
-          zip -j lambda_function.zip lambda/transfer.py
-          aws s3 cp lambda_function.zip s3://$LAMBDA_ZIP_BUCKET/$LAMBDA_ZIP_KEY
-
   deploy:
-    needs: upload-lambda
+    name: Deploy stack to AWS
     runs-on: ubuntu-latest
+    outputs:
+      env-name: ${{ steps.env-name.outputs.environment }}
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v2
 
       - name: Configure AWS credentials
+        id: creds
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.REGION }}
+          aws-region: ${{ github.event.inputs.region }}
 
-      - name: Print input parameters for debugging
+      - name: Configure environment name
+        id: env-name
+        env:
+          REPO: ${{ github.repository }}
         run: |
-          echo "Region: $REGION"
-          echo "SourceBucket: $SOURCE_BUCKET"
-          echo "DestinationBucket: $DEST_BUCKET"
-          echo "LambdaS3Bucket: $LAMBDA_ZIP_BUCKET"
-          echo "LambdaS3Key: $LAMBDA_ZIP_KEY"
+          ENVIRONMENT=$(echo $REPO | tr "/" "-")
+          echo "Environment name: $ENVIRONMENT"
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+
+      - name: Package Lambda and upload to S3
+        run: |
+          zip -j lambda_function.zip lambda/transfer.py
+          aws s3 cp lambda_function.zip s3://${{ github.event.inputs.lambdaZipBucket }}/lambda_function.zip
+
+      - name: Debug input parameters
+        run: |
+          echo "Region: ${{ github.event.inputs.region }}"
+          echo "SourceBucket: ${{ github.event.inputs.sourceBucket }}"
+          echo "DestinationBucket: ${{ github.event.inputs.destinationBucket }}"
+          echo "LambdaZipBucket: ${{ github.event.inputs.lambdaZipBucket }}"
+          echo "LambdaS3Key: lambda_function.zip"
 
       - name: Deploy CloudFormation stack
+        id: deploy-cfn
         uses: aws-actions/aws-cloudformation-github-deploy@v1
         with:
-          name: s3-lambda-transfer
+          name: ${{ steps.env-name.outputs.environment }}-s3-lambda-stack
           template: cfn/s3-lambda-transfer.yml
-          parameter-overrides: >
-            SourceBucketName=${{ env.SOURCE_BUCKET }}
-            DestinationBucketName=${{ env.DEST_BUCKET }}
-            LambdaS3Bucket=${{ env.LAMBDA_ZIP_BUCKET }}
-            LambdaS3Key=${{ env.LAMBDA_ZIP_KEY }}
+          parameter-overrides: >-
+            SourceBucketName=${{ github.event.inputs.sourceBucket }},
+            DestinationBucketName=${{ github.event.inputs.destinationBucket }},
+            LambdaS3Bucket=${{ github.event.inputs.lambdaZipBucket }},
+            LambdaS3Key=lambda_function.zip
           capabilities: CAPABILITY_IAM
+          no-fail-on-empty-changeset: "1"
