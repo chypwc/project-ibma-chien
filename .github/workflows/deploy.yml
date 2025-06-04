@@ -52,6 +52,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ github.event.inputs.region }}
+
       - name: Print input variables
         run: |
           echo "Region: ${{ github.event.inputs.region }}"
@@ -64,8 +65,9 @@ jobs:
         with:
           name: s3-lambda-transfer
           template: cfn/s3-lambda-transfer.yml
-          parameter-overrides: >-
-            SourceBucketName=${{ github.event.inputs.sourceBucket }}
-            DestinationBucketName=${{ github.event.inputs.destinationBucket }}
-            LambdaS3Bucket=${{ github.event.inputs.lambdaZipBucket }}
-            LambdaS3Key=lambda_function.zip
+          parameter-overrides: >
+            "SourceBucketName=${{ github.event.inputs.sourceBucket }}"
+            "DestinationBucketName=${{ github.event.inputs.destinationBucket }}"
+            "LambdaS3Bucket=${{ github.event.inputs.lambdaZipBucket }}"
+            "LambdaS3Key=lambda_function.zip"
+          capabilities: CAPABILITY_IAM
