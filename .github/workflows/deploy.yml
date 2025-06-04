@@ -82,9 +82,9 @@ jobs:
           name: ${{ steps.env-name.outputs.environment }}-s3-lambda-stack
           template: cfn/s3-lambda-transfer.yml
           parameter-overrides: >-
-            SourceBucketName=${{ github.event.inputs.sourceBucket }}
-            DestinationBucketName=${{ github.event.inputs.destinationBucket }}
-            LambdaS3Bucket=${{ github.event.inputs.lambdaZipBucket }}
+            SourceBucketName=${{ github.event.inputs.sourceBucket }},
+            DestinationBucketName=${{ github.event.inputs.destinationBucket }},
+            LambdaS3Bucket=${{ github.event.inputs.lambdaZipBucket }},
             LambdaS3Key=lambda_function.zip
           capabilities: CAPABILITY_NAMED_IAM
           no-fail-on-empty-changeset: "1"
